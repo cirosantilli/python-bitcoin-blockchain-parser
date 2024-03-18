@@ -93,8 +93,8 @@ class Blockchain(object):
         without ordering them according to height.
         """
         for blk_file in get_files(self.path):
-            for raw_block in get_blocks(blk_file):
-                yield Block(raw_block, None, os.path.split(blk_file)[1])
+            for offset, raw_block in get_blocks(blk_file):
+                yield Block(raw_block, None, os.path.split(blk_file)[1], offset_in_dat=offset)
 
     def __getBlockIndexes(self, index):
         """There is no method of leveldb to close the db (and release the lock).
@@ -132,7 +132,7 @@ class Blockchain(object):
 
             # parse the block
             blkFile = os.path.join(self.path, "blk%05d.dat" % index.file)
-            block = Block(get_block(blkFile, index.data_pos))
+            block = Block(get_block(blkFile, index.data_pos), blk_file=blkFile, offset_in_dat=index.data_pos)
 
             if i == 0:
                 first_block = block
@@ -220,7 +220,7 @@ class Blockchain(object):
             if blkIdx.file == -1 or blkIdx.data_pos == -1:
                 break
             blkFile = os.path.join(self.path, "blk%05d.dat" % blkIdx.file)
-            yield Block(get_block(blkFile, blkIdx.data_pos), blkIdx.height)
+            yield Block(get_block(blkFile, blkIdx.data_pos), blkIdx.height, blk_file=blkIdx.file, offset_in_dat=blkIdx.data_pos)
 
     def get_transaction(self, txid, db):
         """Yields the transaction contained in the .blk files as a python
@@ -248,7 +248,7 @@ class Blockchain(object):
             try:
                 offset_e = offset + (1024 * 2 ** j)
                 transaction = Transaction.from_hex(
-                    transaction_data[offset:offset_e])
+                    transaction_data[offset:offset_e], offset_in_block=offset)
                 return transaction
             except Exception:
                 continue

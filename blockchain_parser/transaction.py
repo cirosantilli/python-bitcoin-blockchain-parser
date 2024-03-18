@@ -23,7 +23,7 @@ def bip69_sort(data):
 class Transaction(object):
     """Represents a bitcoin transaction"""
 
-    def __init__(self, raw_hex):
+    def __init__(self, raw_hex, offset_in_block=None):
         self._hash = None
         self._txid = None
         self.inputs = None
@@ -34,6 +34,7 @@ class Transaction(object):
         self.n_inputs = 0
         self.n_outputs = 0
         self.is_segwit = False
+        self.offset_in_block: int = offset_in_block
 
         offset = 4
 

@@ -13,13 +13,14 @@ from .transaction import Transaction
 from .block_header import BlockHeader
 from .utils import format_hash, decode_varint, double_sha256
 
+HEADER_LEN = 80
 
 def get_block_transactions(raw_hex):
     """Given the raw hexadecimal representation of a block,
     yields the block's transactions
     """
     # Skipping the header
-    transaction_data = raw_hex[80:]
+    transaction_data = raw_hex[HEADER_LEN:]
 
     # Decoding the number of transactions, offset is the size of
     # the varint (1 to 9 bytes)
@@ -32,6 +33,7 @@ def get_block_transactions(raw_hex):
                 offset_e = offset + (1024 * 2 ** j)
                 transaction = Transaction.from_hex(
                     transaction_data[offset:offset_e])
+                transaction.offset_in_block = offset + HEADER_LEN
                 yield transaction
                 break
             except:
@@ -46,7 +48,7 @@ class Block(object):
     Represents a Bitcoin block, contains its header and its transactions.
     """
 
-    def __init__(self, raw_hex, height=None, blk_file=None):
+    def __init__(self, raw_hex, height=None, blk_file=None, offset_in_dat=None):
         self.hex = raw_hex
         self._hash = None
         self._transactions = None
@@ -54,7 +56,8 @@ class Block(object):
         self._n_transactions = None
         self.size = len(raw_hex)
         self.height = height
-        self.blk_file = blk_file
+        self.blk_file: int = blk_file
+        self.offset_in_dat: int = offset_in_dat
 
     def __repr__(self):
         return "Block(%s)" % self.hash
